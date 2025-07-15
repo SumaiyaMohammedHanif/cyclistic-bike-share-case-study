@@ -1,0 +1,163 @@
+---
+title: "Cyclistic Case Study"
+author: "Sumaiya Mohammed Hanif"
+date: "2025-07-15"
+output: html_document
+---
+
+# 1. Business Task
+
+The business task is to analyze how annual members and casual riders use Cyclistic bikes differently. The goal is to identify actionable insights that can help convert casual riders into annual members and increase long-term revenue.
+
+---
+
+# 2. Data Sources
+
+Data was obtained from the Divvy Bike Share system’s public trip data:
+- **Divvy 2019 Q1** CSV file
+- **Divvy 2020 Q1** CSV file
+
+These datasets include ride IDs, timestamps, stations, and user types (member or casual). The data is publicly available and anonymized to protect user privacy.
+
+---
+
+# 3. Data Cleaning and Preparation
+
+Below I show the steps taken to clean and prepare the data for analysis:
+
+
+```{r load-libraries, message=FALSE}
+library(tidyverse)
+library(lubridate)
+```
+
+
+```{r Load CSV files, message=FALSE}
+q1_2019 <- read_csv("Divvy_Trips_2019_Q1 - Divvy_Trips_2019_Q1.csv")
+q1_2020 <- read_csv("Divvy_Trips_2020_Q1 - Divvy_Trips_2020_Q1.csv")
+```
+
+
+```{r Standardize 2019 Columns, message=FALSE}
+q1_2019 <- q1_2019 %>%
+  rename(
+    ride_id = trip_id,
+    started_at = start_time,
+    ended_at = end_time,
+    start_station_id = from_station_id,
+    start_station_name = from_station_name,
+    end_station_id = to_station_id,
+    end_station_name = to_station_name,
+    member_casual = usertype
+  ) %>%
+  mutate(
+    rideable_type = "classic_bike",
+    start_lat = NA,
+    start_lng = NA,
+    end_lat = NA,
+    end_lng = NA,
+    started_at = ymd_hms(started_at),
+    ended_at = ymd_hms(ended_at)
+  ) %>%
+  select(
+    ride_id, rideable_type, started_at, ended_at,
+    start_station_name, start_station_id,
+    end_station_name, end_station_id,
+    start_lat, start_lng, end_lat, end_lng,
+    member_casual
+  )
+```
+
+```{r}
+q1_2019 <- mutate(q1_2019, ride_id = as.character(ride_id)
+                  ,rideable_type = as.character(rideable_type))
+```
+
+
+```{r Clean 2020 Dates}
+q1_2020 <- q1_2020 %>%
+  mutate(
+    started_at = ymd_hms(started_at),
+    ended_at = ymd_hms(ended_at))
+```
+
+```{r Combine Data}
+all_trips <- bind_rows(q1_2019, q1_2020)
+```
+
+```{r Create New Columns}
+all_trips <- all_trips %>%
+  drop_na() %>%
+  mutate(
+    ride_length = as.numeric(difftime(ended_at, started_at, units = "mins")),
+    day_of_week = wday(started_at, label = TRUE, abbr = FALSE)
+  ) %>%
+  filter(ride_length >= 1, ride_length < 1440)
+```
+# 4. Analysis Summary
+```{r Descriptive Stats}
+summary_stats <- all_trips %>%
+  group_by(member_casual) %>%
+  summarise(
+    mean_ride_length = mean(ride_length),
+    median_ride_length = median(ride_length),
+    max_ride_length = max(ride_length),
+    min_ride_length = min(ride_length)
+ )
+```
+
+```{r Rides by Day of Week}
+rides_by_day <- all_trips %>%
+  group_by(member_casual, day_of_week) %>%
+  summarise(num_rides = n(), avg_duration = mean(ride_length)) %>%
+  arrange(member_casual, day_of_week)
+```
+
+# 5. Visualizations and Key Findings
+```{r Average Ride Length by User Type}
+all_trips %>%
+  group_by(member_casual) %>%
+  summarise(avg_ride_length = mean(ride_length)) %>%
+  ggplot(aes(x=member_casual, y=avg_ride_length, fill=member_casual)) +
+  geom_col() +
+  labs(title="Average Ride Length by User Type", x="User Type", y="Minutes")
+```
+
+```{r Number of Rides by Day of Week}
+rides_by_day %>%
+  ggplot(aes(x=day_of_week, y=num_rides, fill=member_casual)) +
+  geom_col(position="dodge") +
+  labs(title="Number of Rides by Day of Week", x="Day of Week", y="Number of Rides")
+```
+
+```{r Average Ride Duration by Day of Week}
+rides_by_day %>%
+  ggplot(aes(x=day_of_week, y=avg_duration, fill=member_casual)) +
+  geom_col(position="dodge") +
+  labs(title="Average Ride Duration by Day of Week", x="Day of Week", y="Minutes")
+```
+
+# 6. Recommendations
+Based on the analysis, I propose the following recommendations:
+
+Weekend Promotions: Offer discounted membership promotions targeted at casual users who primarily ride on weekends.
+
+Commuter-Focused Advertising: Highlight cost savings and convenience of annual memberships for weekday commuters.
+
+Personalized Offers: Target high-frequency casual riders with tailored email campaigns offering membership discounts or perks.
+
+# 7. Exporting Data
+Below is code to export cleaned data and analysis summaries for sharing or future use.
+```{r}
+write_csv(all_trips, "cleaned_all_trips.csv")
+write_csv(summary_stats, "summary_stats.csv")
+write_csv(rides_by_day, "rides_by_day.csv")
+```
+
+
+
+
+
+
+
+
