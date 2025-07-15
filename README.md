@@ -39,11 +39,11 @@ Analyze usage patterns to provide insights that can help convert casual riders i
 
 ## 📎 Files Included
 
-- `Cyclistic_Analysis.R` - data cleaning and analysis code
-- `Cyclistic_Report.Rmd` - reproducible R Markdown report
-- `Cyclistic_Report.docx` - polished Word report
+- `Cyclisticdata_Analysis.R` - data cleaning and analysis code
+- `Cyclistic-Data-Report.Rmd` - reproducible R Markdown report
+- `Cyclistic-Data-Report.docx` - polished Word report
 - `Cyclistic_Presentation.pptx` - stakeholder presentation slides
-- `cleaned_all_trips.csv` - cleaned dataset
+- `cleaned_all_trips_sample.csv` - cleaned dataset
 - `plots/` - exported chart images
 
 ##  Author
